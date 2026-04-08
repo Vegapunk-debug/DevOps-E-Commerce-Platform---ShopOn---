@@ -1,0 +1,20 @@
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg: #ece9e2;
+  --bg-soft: #e3dfd6;
+  --ink: #0b0b0b;
+  --ink-soft: #2a2a2a;
+  --muted: #6b6b66;
+  --hair: rgba(0,0,0,0.14);
+  --pill: rgba(255,255,255,0.55);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body, #root { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: 'Archivo', system-ui, sans-serif; }
+body { overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+a { color: inherit; text-decoration: none; }
+.mono { font-family: 'JetBrains Mono', ui-monospace, monospace; letter-spacing: 0.02em; }
+
+/* ======= 3D CANVAS ======= */
+.three-root {

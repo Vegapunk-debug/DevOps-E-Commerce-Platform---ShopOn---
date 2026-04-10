@@ -1,75 +1,190 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import './App.css';
+import Loader from './components/Loader';
+import Nav from './components/Nav';
+import Hero from './components/Hero';
+import Elevate from './components/Elevate';
+import Detail from './components/Detail';
+import Crafted from './components/Crafted';
+import Features from './components/Features';
+import CtaSection from './components/CtaSection';
+import Footer from './components/Footer';
+import ProgressRail from './components/ProgressRail';
+import ProductOverlay from './components/ProductOverlay';
+import CartDrawer from './components/CartDrawer';
+import ShoeScene from './components/ShoeScene';
+import MenPage from './components/MenPage';
+import WomenPage from './components/WomenPage';
+import KidsPage from './components/KidsPage';
+import CustomPage from './components/CustomPage';
+import SalePage from './components/SalePage';
+import PageTransition from './components/PageTransition';
+import FlyToCartLayer, { useFlyToCart } from './components/FlyToCart';
+
+const API = 'http://localhost:3001/api';
+
+function ScrollToTop() {
+  return null;
+}
+
+function ShoeSceneWrapper() {
+  const { pathname } = useLocation();
+  if (pathname !== '/') return null;
+  return <ShoeScene onLoaded={() => {}} />;
+}
 
 function App() {
-  const [sneakers, setSneakers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null); 
+  const [product, setProduct] = useState(null);
+  const [productOpen, setProductOpen] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [cartItems, setCartItems] = useState([]);
+  const [toast, setToast] = useState('');
+  const [savedItems, setSavedItems] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('shopon_wishlist') || '[]'); } catch { return []; }
+  });
+  const { flyItems, triggerFly } = useFlyToCart();
 
   useEffect(() => {
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
-
-    fetch(`${apiUrl}/api/sneakers`)
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error('Network response was not ok');
-        }
-        return res.json();
-      })
-      .then((data) => {
-        setSneakers(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error('Error fetching sneakers:', err);
-        setError("Could not load shoes. Is the backend server running?");
-        setLoading(false);
+    fetch(`${API}/products?featured=true`)
+      .then(r => r.json())
+      .then(data => { if (data.length > 0) setProduct(data[0]); })
+      .catch(() => {
+        setProduct({
+          id: 1, name: "TC 7900 'ShopOn'", subtitle: 'WMNS · SS26', price: 185,
+          description: 'Engineered for those who demand both performance and style.',
+          sizes: ['6','6.5','7','7.5','8','8.5','9','9.5','10'],
+          weight: '248g', drop: '8mm', rating: 4.9,
+        });
       });
   }, []);
 
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+  const fetchCart = useCallback(() => {
+    fetch(`${API}/cart`).then(r => r.json()).then(setCartItems).catch(() => {});
+  }, []);
+
+  useEffect(() => { fetchCart(); }, [fetchCart]);
+
+  // Persist wishlist
+  useEffect(() => {
+    localStorage.setItem('shopon_wishlist', JSON.stringify(savedItems));
+  }, [savedItems]);
+
+  const toggleSave = (productId) => {
+    setSavedItems(prev => {
+      if (prev.includes(productId)) {
+        showToast('REMOVED FROM WISHLIST');
+        return prev.filter(id => id !== productId);
+      } else {
+        showToast('ADDED TO WISHLIST');
+        return [...prev, productId];
+      }
+    });
+  };
+
+  const addToCart = async (productId, size, sourceEl) => {
+    if (sourceEl) {
+      triggerFly(sourceEl);
+      setTimeout(() => {
+        const cartBtn = document.querySelector('.icon-btn[title="Cart"]');
+        if (cartBtn) {
+          cartBtn.classList.remove('cart-bounce');
+          void cartBtn.offsetWidth;
+          cartBtn.classList.add('cart-bounce');
+          setTimeout(() => cartBtn.classList.remove('cart-bounce'), 500);
+        }
+      }, 700);
+    }
+
+    try {
+      await fetch(`${API}/cart`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId, size }),
+      });
+      fetchCart();
+      showToast('ADDED TO BAG');
+    } catch {
+      showToast('ADDED TO BAG (OFFLINE)');
+    }
+  };
+
+  const removeFromCart = async (id) => {
+    try {
+      await fetch(`${API}/cart/${id}`, { method: 'DELETE' });
+      fetchCart();
+    } catch {
+      setCartItems(prev => prev.filter(i => i.id !== id));
+    }
+  };
+
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(''), 2000);
+  };
+
+  const cartCount = cartItems.reduce((s, i) => s + i.quantity, 0);
 
   return (
-    <div className="container">
-      <header className="header">
-        <img src="/logo.png" alt="ShopOn Logo" style={{ height: '60px', marginBottom: '10px' }} />
-        <h1>Shop On</h1>
-        <p>Sneakers Collection</p>
-      </header>
+    <BrowserRouter>
+      <ScrollToTop />
+      {loading && <Loader onDone={() => setLoading(false)} />}
 
-      <main>
-        {/* Error Message */}
-        {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
+      <Nav
+        cartCount={cartCount}
+        onCartClick={() => setCartOpen(true)}
+        onWishlistClick={() => showToast(`WISHLIST: ${savedItems.length} ITEM${savedItems.length !== 1 ? 'S' : ''} SAVED`)}
+        wishlistCount={savedItems.length}
+      />
 
-        {/* Loading State or Sneaker Grid */}
-        {loading && !error ? (
-          <div style={{ textAlign: 'center', padding: '4rem' }}>
-            <p>Loading collection...</p>
-          </div>
-        ) : (
-          <div className="shoe-grid">
-            {sneakers.map((shoe) => (
-              <div key={shoe.id} className="shoe-card">
-                <div className="shoe-image-container">
-                  <img
-                    src={`${apiUrl}/images/${shoe.image}`}
-                    alt={shoe.name}
-                    className="shoe-image"
-                  />
-                </div>
-                <div className="shoe-info">
-                  <div className="shoe-tag">New Arrival</div>
-                  <h3 className="shoe-name">{shoe.name}</h3>
-                  <p className="shoe-price" style={{ fontWeight: 'bold', marginTop: '5px' }}>
-                    ${shoe.price}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </main>
-    </div>
-  )
+      <ShoeSceneWrapper />
+
+      <PageTransition>
+        <Routes>
+          <Route path="/" element={
+            <>
+              <ProgressRail />
+              <main>
+                <Hero />
+                <Elevate />
+                <Detail onShopClick={() => setProductOpen(true)} product={product} />
+                <Crafted />
+                <Features />
+                <CtaSection onShopClick={() => setProductOpen(true)} price={product?.price} />
+              </main>
+              <Footer />
+              <ProductOverlay
+                product={product}
+                open={productOpen}
+                onClose={() => setProductOpen(false)}
+                onAddToCart={addToCart}
+                onCartClick={() => setCartOpen(true)}
+                cartCount={cartCount}
+                onSave={toggleSave}
+                saved={product ? savedItems.includes(product.id) : false}
+              />
+            </>
+          } />
+          <Route path="/men" element={<MenPage onAddToCart={addToCart} onCartClick={() => setCartOpen(true)} cartCount={cartCount} savedItems={savedItems} onSave={toggleSave} />} />
+          <Route path="/women" element={<WomenPage onAddToCart={addToCart} onCartClick={() => setCartOpen(true)} cartCount={cartCount} savedItems={savedItems} onSave={toggleSave} />} />
+          <Route path="/kids" element={<KidsPage onAddToCart={addToCart} onCartClick={() => setCartOpen(true)} cartCount={cartCount} savedItems={savedItems} onSave={toggleSave} />} />
+          <Route path="/custom" element={<CustomPage onAddToCart={addToCart} onCartClick={() => setCartOpen(true)} cartCount={cartCount} savedItems={savedItems} onSave={toggleSave} />} />
+          <Route path="/sale" element={<SalePage onAddToCart={addToCart} onCartClick={() => setCartOpen(true)} cartCount={cartCount} savedItems={savedItems} onSave={toggleSave} />} />
+        </Routes>
+      </PageTransition>
+
+      <CartDrawer
+        open={cartOpen}
+        onClose={() => setCartOpen(false)}
+        items={cartItems}
+        onRemove={removeFromCart}
+      />
+
+      <FlyToCartLayer flyItems={flyItems} />
+      <div className={`toast ${toast ? 'show' : ''}`}>{toast}</div>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;

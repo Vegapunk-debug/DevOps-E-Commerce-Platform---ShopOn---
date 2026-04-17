@@ -98,3 +98,85 @@ section { position: relative; min-height: 100vh; padding: 96px 40px 80px; overfl
 @keyframes pulse { 0%,100% { opacity: .3; transform: scale(1); } 50% { opacity: 1; transform: scale(1.4); } }
 
 /* ======= ELEVATE ======= */
+.elevate { min-height: auto; padding-bottom: 260px; }
+.elevate-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+.eyebrow { font-size: 11px; letter-spacing: 0.24em; font-weight: 600; }
+.eyebrow .dim { color: var(--muted); display: block; margin-top: 6px; font-weight: 500; }
+.big-head {
+  font-weight: 800; letter-spacing: -0.03em; line-height: 0.95;
+  font-size: clamp(56px, 8vw, 128px);
+  margin: 28px 0 0 0; text-wrap: balance;
+}
+.spacer-right { min-height: 500px; }
+
+/* Music card */
+.music-card {
+  position: relative; left: 0; margin-top: 60px;
+  width: 240px; background: #fff; border-radius: 22px; padding: 18px 18px 20px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.08), 0 1px 0 rgba(255,255,255,0.9) inset;
+  z-index: 15;
+}
+.music-card .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 26px; }
+.music-card .top svg { width: 38px; height: 14px; }
+.music-card .label { font-size: 10px; letter-spacing: 0.18em; color: var(--muted); }
+.music-card .title { font-weight: 800; letter-spacing: 0.02em; margin-top: 2px; font-size: 15px; }
+.music-card .controls { display: flex; justify-content: space-between; align-items: center; margin-top: 18px; }
+.music-card .play {
+  width: 38px; height: 38px; border-radius: 999px;
+  border: 1.5px solid var(--ink); display: grid; place-items: center;
+  cursor: pointer; transition: background .2s; background: transparent;
+}
+.music-card .play:hover { background: var(--ink); color: #fff; }
+.music-card .play svg { width: 14px; height: 14px; }
+.music-card .ic-btn { cursor: pointer; opacity: 0.8; background: none; border: none; }
+.music-card .bar { margin-top: 14px; height: 3px; background: rgba(0,0,0,0.1); border-radius: 999px; overflow: hidden; }
+.music-card .bar span { display: block; height: 100%; width: 48%; background: var(--ink); border-radius: 999px; transition: width 0.3s; }
+
+/* ======= DETAIL ======= */
+.detail { min-height: auto; padding-bottom: 120px; }
+.detail-grid { display: grid; grid-template-columns: 340px 1fr 340px; gap: 40px; align-items: center; }
+.shoe-card {
+  grid-column: 2; min-height: 520px; border-radius: 40px;
+  border: 1px solid var(--hair);
+  background: linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.1));
+  position: relative;
+}
+.detail-left .eyebrow { margin-bottom: 24px; }
+.detail-left .big-head { font-size: clamp(42px, 5.5vw, 84px); }
+.detail-right { display: flex; flex-direction: column; gap: 24px; }
+.cta-row { display: flex; gap: 12px; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 14px 28px; border-radius: 999px; font-size: 12px;
+  letter-spacing: 0.18em; font-weight: 600; cursor: pointer; transition: all .2s;
+  font-family: 'Archivo', sans-serif; border: none;
+}
+.btn.ghost { background: transparent; border: 1.5px solid var(--ink); color: var(--ink); }
+.btn.ghost:hover { background: var(--ink); color: #fff; }
+.btn.solid { background: var(--ink); color: #fff; border: 1.5px solid var(--ink); }
+.btn.solid:hover { background: transparent; color: var(--ink); }
+.detail-right p { font-size: 11px; line-height: 1.7; letter-spacing: 0.12em; color: var(--ink-soft); max-width: 320px; }
+
+/* ======= CRAFTED ======= */
+.crafted { min-height: auto; padding-top: 140px; padding-bottom: 120px; }
+.crafted-head {
+  font-size: clamp(56px, 8vw, 120px); font-weight: 800;
+  letter-spacing: -0.03em; line-height: 0.95; max-width: 720px;
+}
+.crafted-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 80px; }
+.tile {
+  aspect-ratio: 3/4; border-radius: 28px; background: var(--bg-soft);
+  position: relative; overflow: hidden;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  padding: 28px;
+}
+.tile::before {
+  content: ""; position: absolute; inset: 0;
+  background: repeating-linear-gradient(45deg, rgba(0,0,0,0.04) 0 2px, transparent 2px 16px);
+  opacity: .6;
+}
+.tile .meta { position: relative; z-index: 2; }
+.tile h4 { margin: 0 0 6px 0; font-size: 22px; font-weight: 800; letter-spacing: -0.01em; }
+.tile p { margin: 0; font-size: 10px; letter-spacing: 0.18em; color: var(--muted); }
+.tile .placeholder-tag { position: absolute; top: 14px; left: 14px; font-size: 9px; letter-spacing: 0.16em; color: var(--muted); z-index: 2; }
+

@@ -61,7 +61,7 @@ app.delete('/api/cart/:id', async (req, res) => {
 });
 
 app.get('/', (req, res) => {
-  res.send('ShopSmart Backend Service');
+  res.send('ShopOn Backend Service');
 });
 
 module.exports = app;

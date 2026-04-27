@@ -18,8 +18,8 @@ COPY server/ ./server/
 COPY --from=client-builder /app/client/dist ./client/dist
 
 ENV NODE_ENV=production
-ENV PORT=5001
+ENV PORT=3001
 
-EXPOSE 5001
+EXPOSE 3001
 
 CMD ["node", "server/src/index.js"]

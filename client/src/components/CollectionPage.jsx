@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Footer from './Footer';
 
-const API = 'http://localhost:3001/api';
+const API = import.meta.env.PROD ? '/api' : 'http://localhost:3001/api';
 
 const CARD_PALETTES = [
   { bg: '#e8e4dc', accent: '#0b0b0b' },

@@ -4,7 +4,7 @@ export default function Features() {
   const [features, setFeatures] = useState([]);
 
   useEffect(() => {
-    fetch('http://localhost:3001/api/features')
+    fetch(import.meta.env.PROD ? '/api/features' : 'http://localhost:3001/api/features')
       .then(r => r.json())
       .then(setFeatures)
       .catch(() => {

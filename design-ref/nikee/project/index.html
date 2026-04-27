@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>SAIL — Concept Shoe Site</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #ece9e2;          /* warm off-white / sail */
+      --bg-soft: #e3dfd6;     /* slightly cooler card */
+      --ink: #0b0b0b;
+      --ink-soft: #2a2a2a;
+      --muted: #6b6b66;
+      --hair: rgba(0,0,0,0.14);
+      --pill: rgba(255,255,255,0.55);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: 'Archivo', system-ui, sans-serif; }
+    body { overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+    a { color: inherit; text-decoration: none; }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; letter-spacing: 0.02em; }
+
+    /* Fixed full-viewport 3D canvas */
+    #three-root {
+      position: fixed; inset: 0; z-index: 1;
+      pointer-events: none; /* scroll passes through */
+    }
+    #three-root canvas { display: block; width: 100%; height: 100%; }
+    /* Allow dragging on the hero (first viewport) */
+    #three-root.drag-enabled { pointer-events: auto; cursor: grab; }
+    #three-root.dragging { cursor: grabbing; }
+
+    /* NAV pill */
+    .nav {
+      position: fixed; top: 18px; left: 50%; transform: translateX(-50%);
+      z-index: 50;
+      display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 24px;
+      width: min(1200px, calc(100% - 40px));
+      background: var(--pill);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255,255,255,0.7);
+      border-radius: 999px;
+      padding: 10px 18px 10px 18px;
+      box-shadow: 0 1px 0 rgba(255,255,255,0.7) inset, 0 8px 30px rgba(0,0,0,0.05);
+    }
+    .nav .logo { display:flex; align-items:center; gap:8px; font-weight: 900; letter-spacing: 0.06em; }
+    .nav .logo svg { width: 58px; height: 22px; }
+    .nav ul { list-style:none; display:flex; gap:32px; justify-content:center; margin:0; padding:0; }
+    .nav ul a { font-size: 12px; font-weight:600; letter-spacing: 0.14em; padding: 10px 6px; position: relative; }
+    .nav ul a:hover::after { content:""; position:absolute; left:6px; right:6px; bottom:4px; height:1.5px; background: var(--ink); }
+    .nav .right { display:flex; gap:14px; align-items:center; }
+    .nav .icon-btn { width: 34px; height: 34px; display:grid; place-items:center; border-radius:999px; cursor:pointer; }
+    .nav .icon-btn:hover { background: rgba(0,0,0,0.06); }
+
+    /* ====== CONTENT LAYERS (scroll over canvas) ====== */
+    main { position: relative; z-index: 10; }
+    section { position: relative; min-height: 100vh; padding: 96px 40px 0; }
+    .wrap { max-width: 1280px; margin: 0 auto; position: relative; }
+
+    /* HERO */
+    .hero { min-height: 110vh; padding-top: 110px; }
+    .hero-type {
+      font-family: 'Archivo', sans-serif;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      line-height: 0.82;
+      text-align: center;
+      user-select: none;
+    }
+    .hero-line-1 {
+      font-size: clamp(120px, 22vw, 340px);
+      -webkit-text-stroke: 2px var(--ink);
+      color: transparent;
+      margin: 0;
+    }
+    .hero-line-2 {
+      font-size: clamp(120px, 22vw, 340px);
+      color: var(--ink);
+      margin: -0.05em 0 0 0;
+      mix-blend-mode: multiply;
+      position: relative;
+      z-index: 20;
+    }
+    .hero-sub {
+      position: absolute; bottom: 36px; left: 40px; right: 40px;
+      display:flex; justify-content:space-between; align-items:flex-end; gap: 24px;
+      font-size: 11px; letter-spacing: 0.2em;
+    }
+    .hero-sub .drag-hint { display:flex; align-items:center; gap: 10px; padding: 8px 14px; border: 1px solid var(--hair); border-radius: 999px; background: rgba(255,255,255,0.5); }
+    .hero-sub .dot { width:6px; height:6px; border-radius:999px; background: var(--ink); animation: pulse 1.6s infinite ease-in-out; }
+    @keyframes pulse { 0%,100% { opacity:.3; transform: scale(1); } 50% { opacity:1; transform: scale(1.4); } }
+
+    /* SECTION: Elevate */
+    .elevate { min-height: 120vh; }
+    .elevate-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start;
+    }
+    .eyebrow { font-size: 11px; letter-spacing: 0.24em; font-weight: 600; }
+    .eyebrow .dim { color: var(--muted); display:block; margin-top: 6px; font-weight: 500; }
+    .big-head {
+      font-weight: 800; letter-spacing: -0.03em; line-height: 0.95;
+      font-size: clamp(56px, 8vw, 128px);
+      margin: 28px 0 0 0;
+      text-wrap: balance;
+    }
+    .spacer-right { min-height: 600px; } /* reserves space for shoe */
+
+    /* Music card widget */
+    .music-card {
+      position: absolute; left: 0; bottom: -200px;
+      width: 240px; background: #fff; border-radius: 22px; padding: 18px 18px 20px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.08), 0 1px 0 rgba(255,255,255,0.9) inset;
+      z-index: 15;
+    }
+    .music-card .top { display:flex; justify-content:space-between; align-items:center; margin-bottom: 26px; }
+    .music-card .top svg { width: 38px; height: 14px; }
+    .music-card .label { font-size: 10px; letter-spacing: 0.18em; color: var(--muted); }
+    .music-card .title { font-weight: 800; letter-spacing: 0.02em; margin-top: 2px; font-size: 15px; }
+    .music-card .controls { display:flex; justify-content:space-between; align-items:center; margin-top: 18px; }
+    .music-card .play { width: 38px; height: 38px; border-radius: 999px; border: 1.5px solid var(--ink); display:grid; place-items:center; cursor:pointer; transition: background .2s; }
+    .music-card .play:hover { background: var(--ink); color:#fff; }
+    .music-card .play svg { width: 14px; height: 14px; }
+    .music-card .ic-btn { cursor:pointer; opacity:0.8; }
+    .music-card .bar { margin-top: 14px; height: 3px; background: rgba(0,0,0,0.1); border-radius:999px; overflow: hidden; }
+    .music-card .bar span { display:block; height:100%; width: 48%; background: var(--ink); border-radius:999px; }
+
+    /* DETAIL section w/ card around shoe */
+    .detail { min-height: 130vh; }
+    .detail-grid { display:grid; grid-template-columns: 340px 1fr 340px; gap: 40px; align-items: center; }
+    .shoe-card {
+      grid-column: 2;
+      min-height: 520px;
+      border-radius: 40px;
+      border: 1px solid var(--hair);
+      background: linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.1));
+      position: relative;
+    }
+    .detail-left .eyebrow { margin-bottom: 24px; }
+    .detail-left .big-head { font-size: clamp(42px, 5.5vw, 84px); }
+    .detail-right { display:flex; flex-direction:column; gap: 24px; }
+    .cta-row { display:flex; gap: 12px; }
+    .btn {
+      display:inline-flex; align-items:center; justify-content:center;
+      padding: 14px 28px; border-radius: 999px; font-size: 12px; letter-spacing: 0.18em; font-weight: 600;
+      cursor:pointer; transition: all .2s;
+    }
+    .btn.ghost { background: transparent; border: 1.5px solid var(--ink); }
+    .btn.ghost:hover { background: var(--ink); color:#fff; }
+    .btn.solid { background: var(--ink); color:#fff; border: 1.5px solid var(--ink); }
+    .btn.solid:hover { background: transparent; color: var(--ink); }
+    .detail-right p { font-size: 11px; line-height: 1.7; letter-spacing: 0.12em; color: var(--ink-soft); max-width: 320px; }
+
+    /* CRAFTED */
+    .crafted { min-height: 120vh; padding-top: 140px; }
+    .crafted-head { font-size: clamp(56px, 8vw, 120px); font-weight: 800; letter-spacing: -0.03em; line-height: 0.95; max-width: 720px; }
+    .crafted-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 120px; }
+    .tile {
+      aspect-ratio: 3/4; border-radius: 28px; background: var(--bg-soft);
+      position: relative; overflow: hidden;
+      display:flex; flex-direction:column; justify-content:flex-end;
+      padding: 28px;
+    }
+    .tile::before {
+      content:""; position:absolute; inset:0;
+      background: repeating-linear-gradient(45deg, rgba(0,0,0,0.04) 0 2px, transparent 2px 16px);
+      opacity: .6;
+    }
+    .tile .meta { position: relative; z-index:2; }
+    .tile h4 { margin: 0 0 6px 0; font-size: 22px; font-weight: 800; letter-spacing: -0.01em; }
+    .tile p { margin: 0; font-size: 10px; letter-spacing: 0.18em; color: var(--muted); }
+    .tile .placeholder-tag { position:absolute; top: 14px; left: 14px; font-size: 9px; letter-spacing: 0.16em; color: var(--muted); z-index:2; }
+
+    /* FEATURES */
+    .features-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 40px; }
+    .feature {
+      border-radius: 28px; border: 1px solid var(--hair); padding: 28px; min-height: 220px;
+      display:flex; flex-direction:column; justify-content:space-between;
+      background: rgba(255,255,255,0.3);
+    }
+    .feature h3 { font-size: 28px; font-weight: 800; letter-spacing: -0.01em; line-height: 1; margin: 0; }
+    .feature p { font-size: 10px; letter-spacing: 0.18em; color: var(--muted); margin: 14px 0 0 0; }
+    .feature .num { font-size: 11px; letter-spacing: 0.2em; color: var(--muted); }
+
+    /* CTA */
+    .cta { min-height: 80vh; display:grid; place-items:center; text-align:center; padding-top: 60px; }
+    .cta h2 { font-size: clamp(72px, 13vw, 220px); font-weight: 900; letter-spacing: -0.04em; line-height: 0.88; margin: 0; }
+    .cta .outline { -webkit-text-stroke: 2px var(--ink); color: transparent; }
+
+    /* FOOTER */
+    footer {
+      position: relative; z-index: 10;
+      background: #0b0b0b; color: #ece9e2;
+      padding: 80px 40px 28px;
+      margin-top: 80px;
+    }
+    .foot-wrap { max-width: 1280px; margin: 0 auto; display:grid; grid-template-columns: 1.2fr 1fr 1fr 1fr; gap: 40px; }
+    .foot-brand svg { width: 80px; margin-bottom: 22px; }
+    .foot-brand .socials { display:flex; gap: 14px; margin-top: 22px; }
+    .foot-brand .socials a { width:34px; height:34px; border-radius:999px; display:grid; place-items:center; border: 1px solid rgba(255,255,255,0.2); transition: all .2s; }
+    .foot-brand .socials a:hover { background:#fff; color:#0b0b0b; }
+    .foot-col h5 { font-size: 10px; letter-spacing: 0.22em; margin: 0 0 18px 0; font-weight:600; color: rgba(255,255,255,0.6); }
+    .foot-col ul { list-style:none; padding:0; margin:0; display:flex; flex-direction: column; gap: 10px; }
+    .foot-col a { font-size: 13px; opacity: .85; }
+    .foot-col a:hover { opacity: 1; text-decoration: underline; }
+    .foot-bottom { max-width: 1280px; margin: 60px auto 0; padding-top: 22px; border-top: 1px solid rgba(255,255,255,0.14); text-align:center; font-size: 11px; letter-spacing: 0.18em; color: rgba(255,255,255,0.55); }
+
+    /* Progress rail */
+    .progress {
+      position: fixed; right: 22px; top: 50%; transform: translateY(-50%);
+      z-index: 30; display:flex; flex-direction: column; gap: 10px;
+    }
+    .progress span { width: 20px; height: 2px; background: rgba(0,0,0,0.2); transition: all .3s; }
+    .progress span.on { background: var(--ink); width: 34px; }
+
+    /* MOCK PRODUCT PAGE (overlay) */
+    .product-overlay {
+      position: fixed; inset: 0; z-index: 100;
+      background: var(--bg);
+      display: none;
+      overflow-y: auto;
+    }
+    .product-overlay.on { display: block; }
+    .product-overlay .close {
+      position: absolute; top: 24px; right: 24px;
+      width: 44px; height: 44px; border-radius: 999px; border: 1.5px solid var(--ink);
+      display:grid; place-items:center; cursor:pointer; background: rgba(255,255,255,0.6);
+    }
+    .product-overlay .close:hover { background: var(--ink); color: #fff; }
+    .po-wrap { max-width: 1280px; margin: 0 auto; padding: 60px 40px; display:grid; grid-template-columns: 1fr 1fr; gap: 60px; }
+    .po-gallery { aspect-ratio: 4/5; border-radius: 32px; background: var(--bg-soft); position: relative; overflow: hidden; }
+    .po-gallery::before { content:""; position:absolute; inset:0; background: repeating-linear-gradient(135deg, rgba(0,0,0,0.035) 0 2px, transparent 2px 14px); }
+    .po-gallery .tag { position: absolute; top: 20px; left: 20px; font-size: 10px; letter-spacing: 0.2em; color: var(--muted); z-index: 2; }
+    .po-gallery .big-img { position: absolute; inset: 0; display:grid; place-items:center; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); }
+    .po-info .eyebrow { margin-bottom: 18px; }
+    .po-info h1 { font-size: 64px; font-weight: 800; letter-spacing: -0.03em; margin: 0 0 18px 0; line-height: 1; }
+    .po-info .price { font-size: 26px; font-weight: 700; margin: 0 0 28px; }
+    .po-info .desc { font-size: 13px; line-height: 1.7; color: var(--ink-soft); max-width: 460px; margin-bottom: 32px; }
+    .size-row { display:flex; gap: 10px; flex-wrap: wrap; margin-bottom: 32px; }
+    .size {
+      width: 54px; height: 54px; border: 1px solid var(--hair); border-radius: 14px;
+      display:grid; place-items:center; font-size: 13px; font-weight: 600; cursor: pointer;
+      background: rgba(255,255,255,0.4);
+    }
+    .size:hover, .size.sel { background: var(--ink); color:#fff; border-color: var(--ink); }
+    .po-cta { display: flex; gap: 12px; }
+    .po-meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 40px; }
+    .po-meta .m { padding: 16px; border-radius: 16px; background: rgba(255,255,255,0.4); border: 1px solid var(--hair); }
+    .po-meta .m h6 { margin: 0 0 6px 0; font-size: 9px; letter-spacing: 0.2em; color: var(--muted); font-weight: 600; }
+    .po-meta .m p { margin: 0; font-size: 13px; font-weight: 600; }
+
+    /* MOBILE-ish */
+    @media (max-width: 900px) {
+      .elevate-grid, .detail-grid, .crafted-grid, .features-grid, .po-wrap, .foot-wrap { grid-template-columns: 1fr; }
+      .detail-grid .shoe-card { grid-column: 1; min-height: 420px; }
+      .music-card { position: relative; bottom: auto; left: auto; margin-top: 40px; }
+      .nav ul { display: none; }
+    }
+
+    /* Loader */
+    #loader {
+      position: fixed; inset: 0; z-index: 200; background: var(--bg);
+      display:grid; place-items:center;
+      transition: opacity .6s ease; opacity: 1;
+    }
+    #loader.gone { opacity: 0; pointer-events: none; }
+    #loader .bar { width: 180px; height: 2px; background: rgba(0,0,0,0.1); overflow:hidden; border-radius:999px; margin-top: 22px; }
+    #loader .bar span { display:block; height:100%; width: 10%; background: var(--ink); transition: width .3s; }
+    #loader .lbl { font-family:'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.3em; color: var(--muted); margin-top: 18px; }
+  </style>
+</head>
+<body>
+
+  <!-- LOADER -->
+  <div id="loader">
+    <div style="text-align:center">
+      <div style="font-weight:900; font-size: 38px; letter-spacing: 0.08em;">SAIL</div>
+      <div class="bar"><span id="loader-bar"></span></div>
+      <div class="lbl" id="loader-lbl">LOADING · 0%</div>
+    </div>
+  </div>
+
+  <!-- 3D CANVAS LAYER -->
+  <div id="three-root" class="drag-enabled"></div>
+
+  <!-- NAV -->
+  <header class="nav">
+    <a class="logo" href="#">
+      <!-- Abstract triangle/arrow mark (NOT nike) -->
+      <svg viewBox="0 0 58 22" fill="none">
+        <path d="M2 16 L28 4 L56 18" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span style="font-size: 13px; letter-spacing:0.2em">SAIL</span>
+    </a>
+    <ul>
+      <li><a href="#">MEN</a></li>
+      <li><a href="#">WOMEN</a></li>
+      <li><a href="#">KIDS</a></li>
+      <li><a href="#">CUSTOM</a></li>
+      <li><a href="#">SALE</a></li>
+    </ul>
+    <div class="right">
+      <div class="icon-btn" title="Cart">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h2l2 12h10l2-8H7"/><circle cx="10" cy="20" r="1.3"/><circle cx="17" cy="20" r="1.3"/></svg>
+      </div>
+      <div class="icon-btn" title="Account">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="9" r="3.5"/><path d="M5 20c1.5-3.5 4-5 7-5s5.5 1.5 7 5"/></svg>
+      </div>
+    </div>
+  </header>
+
+  <!-- PROGRESS RAIL -->
+  <div class="progress" id="progress"></div>
+
+  <!-- CONTENT -->
+  <main data-screen-label="00 Landing">
+    <!-- SECTION 1: HERO -->
+    <section class="hero" data-section="hero" data-screen-label="01 Hero">
+      <div class="wrap">
+        <h1 class="hero-type">
+          <div class="hero-line-1">NO</div>
+          <div class="hero-line-2">LIMITS</div>
+        </h1>
+      </div>
+      <div class="hero-sub">
+        <div class="mono">SAIL TC 7900 · WMNS · CONCEPT 2026</div>
+        <div class="drag-hint mono"><span class="dot"></span> DRAG TO ROTATE</div>
+        <div class="mono">SCROLL ↓</div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: ELEVATE -->
+    <section class="elevate" data-section="elevate" data-screen-label="02 Elevate">
+      <div class="wrap">
+        <div class="elevate-grid">
+          <div>
+            <div class="eyebrow mono">SAIL TC 7900 IN ACTION <span class="dim">WMNS TC 2026</span></div>
+            <h2 class="big-head">ELEVATE<br/>YOUR GAMES<br/>WITH SAIL TC<br/>7900 'SAIL'</h2>
+
+            <div class="music-card" aria-label="Player">
+              <div class="top">
+                <svg viewBox="0 0 58 22" fill="none"><path d="M2 16 L28 4 L56 18" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <svg width="22" height="12" viewBox="0 0 22 12" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="0.5" y="0.5" width="18" height="11" rx="2"/><rect x="2" y="2" width="14" height="8" fill="currentColor"/><rect x="20" y="4" width="1.6" height="4" fill="currentColor"/></svg>
+              </div>
+              <div class="label mono">NEXT</div>
+              <div class="title">NO LIMITS</div>
+              <div class="controls">
+                <div class="ic-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18 6v12L9 12zM6 6h2v12H6z"/></svg></div>
+                <div class="play" id="play-btn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>
+                <div class="ic-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6v12l9-6zM16 6h2v12h-2z"/></svg></div>
+              </div>
+              <div class="bar"><span></span></div>
+            </div>
+          </div>
+          <div class="spacer-right"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 3: DETAIL -->
+    <section class="detail" data-section="detail" data-screen-label="03 Detail">
+      <div class="wrap">
+        <div class="detail-grid">
+          <div class="detail-left">
+            <div class="eyebrow mono">SAIL TC 7900 IN ACTION <span class="dim">WMNS TC 2026</span></div>
+            <h2 class="big-head">ELEVATE<br/>YOUR GAMES<br/>WITH SAIL TC<br/>7900 'SAIL'</h2>
+          </div>
+          <div class="shoe-card"></div>
+          <div class="detail-right">
+            <div class="cta-row">
+              <button class="btn ghost" id="about-btn">ABOUT</button>
+              <button class="btn solid" id="shop-btn">SHOP NOW</button>
+            </div>
+            <p class="mono">THE SAIL TC 7900 IS ENGINEERED FOR THOSE WHO DEMAND BOTH PERFORMANCE AND STYLE. WITH ITS LIGHTWEIGHT CONSTRUCTION AND INNOVATIVE CUSHIONING, THIS SHOE IS YOUR ULTIMATE COMPANION FOR EVERY STRIDE.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 4: CRAFTED -->
+    <section class="crafted" data-section="crafted" data-screen-label="04 Crafted">
+      <div class="wrap">
+        <div class="eyebrow mono">SAIL TC 7900</div>
+        <h2 class="crafted-head">CRAFTED FOR<br/>LIFESTYLE</h2>
+
+        <div class="crafted-grid">
+          <div class="tile">
+            <span class="placeholder-tag mono">// DETAIL · UPPER MESH</span>
+            <div class="meta"><h4>LIGHTWEIGHT DESIGN</h4><p class="mono">ENSURES MAXIMUM AGILITY AND COMFORT</p></div>
+          </div>
+          <div class="tile">
+            <span class="placeholder-tag mono">// DETAIL · TOP VIEW</span>
+            <div class="meta"><h4>PRECISION FIT</h4><p class="mono">DYNAMIC LACING LOCKS IN THE STRIDE</p></div>
+          </div>
+          <div class="tile">
+            <span class="placeholder-tag mono">// DETAIL · OUTSOLE</span>
+            <div class="meta"><h4>EXCEL TRACTION</h4><p class="mono">OFFERS SUPERIOR GRIP ON VARIOUS SURFACES</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 5: FEATURES / SPECS -->
+    <section class="crafted" data-section="features" data-screen-label="05 Features" style="min-height: 100vh;">
+      <div class="wrap">
+        <div class="eyebrow mono">SPECS · 2026 CONCEPT</div>
+        <h2 class="crafted-head" style="font-size: clamp(48px, 6vw, 88px);">BUILT FOR<br/>EVERY STRIDE</h2>
+
+        <div class="features-grid">
+          <div class="feature"><span class="num mono">01 / CUSHIONING</span><h3>SAIL AIR — 24MM DROP</h3><p class="mono">RESPONSIVE FOAM UNDERFOOT · 12% MORE ENERGY RETURN</p></div>
+          <div class="feature"><span class="num mono">02 / UPPER</span><h3>RECYCLED KNIT MESH</h3><p class="mono">70% POST-CONSUMER YARN · BREATHABLE 4-WAY STRETCH</p></div>
+          <div class="feature"><span class="num mono">03 / OUTSOLE</span><h3>HEX RUBBER GRID</h3><p class="mono">MULTI-SURFACE TRACTION · WET & DRY TESTED</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 6: CTA -->
+    <section class="cta" data-section="cta" data-screen-label="06 CTA">
+      <div class="wrap">
+        <h2>
+          <div class="outline">MOVE</div>
+          <div>FIRST.</div>
+        </h2>
+        <div style="margin-top: 40px; display:flex; gap:12px; justify-content:center;">
+          <button class="btn solid" onclick="openProduct()">SHOP NOW · $185</button>
+          <button class="btn ghost">FIND A STORE</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer data-screen-label="07 Footer">
+    <div class="foot-wrap">
+      <div class="foot-brand">
+        <svg viewBox="0 0 58 22" fill="none"><path d="M2 16 L28 4 L56 18" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div style="font-size: 13px; opacity: .75; max-width: 300px; line-height: 1.6;">Concept athletic footwear website. Original brand exploration — not affiliated with any real manufacturer.</div>
+        <div class="socials">
+          <a href="#"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13 3h4l-5 6 6 12h-5l-3.5-7L5 21H1l6-7L1 3h5l3 6z"/></svg></a>
+          <a href="#"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg></a>
+          <a href="#"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M22 5.9c-.7.3-1.5.5-2.4.6.9-.5 1.5-1.3 1.8-2.3-.8.5-1.7.8-2.6 1-1.5-1.6-4.1-1.6-5.6 0-1 1-1.4 2.4-1 3.8C8.7 8.8 5.4 7 3.2 4.2c-1.2 2-.6 4.5 1.3 5.7-.7 0-1.3-.2-1.9-.5 0 2 1.4 3.8 3.4 4.2-.6.2-1.3.2-1.9.1.5 1.7 2.1 2.9 3.9 2.9-1.8 1.4-4.1 1.9-6 1.6 4 2.6 9.1 2 12.5-1.5 2.9-3 3.6-7 3.3-9.8.8-.6 1.5-1.3 2.2-2z"/></svg></a>
+          <a href="#"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4a1 1 0 00-1 1v14a1 1 0 001 1h16a1 1 0 001-1V5a1 1 0 00-1-1zM8 18H5V9h3v9zM6.5 7.7a1.7 1.7 0 110-3.4 1.7 1.7 0 010 3.4zM19 18h-3v-4.7c0-1.1 0-2.5-1.5-2.5s-1.7 1.2-1.7 2.5V18h-3V9h2.9v1.2h.1c.4-.8 1.4-1.5 2.8-1.5 3 0 3.5 2 3.5 4.5V18z"/></svg></a>
+        </div>
+      </div>
+      <div class="foot-col"><h5>GALLERY</h5><ul><li><a href="#">Lookbook</a></li><li><a href="#">Campaigns</a></li><li><a href="#">Archive</a></li><li><a href="#">Press</a></li></ul></div>
+      <div class="foot-col"><h5>COMPANY</h5><ul><li><a href="#">About</a></li><li><a href="#">Sustainability</a></li><li><a href="#">Careers</a></li><li><a href="#">Stores</a></li></ul></div>
+      <div class="foot-col"><h5>HELP</h5><ul><li><a href="#">Contact</a></li><li><a href="#">Shipping</a></li><li><a href="#">Returns</a></li><li><a href="#">Terms</a></li></ul></div>
+    </div>
+    <div class="foot-bottom mono">© 2026 SAIL — CONCEPT WEBSITE · BUILT FOR DEMO ONLY</div>
+  </footer>
+
+  <!-- MOCK PRODUCT PAGE -->
+  <div class="product-overlay" id="product">
+    <div class="close" id="close-product">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 5l14 14M19 5L5 19"/></svg>
+    </div>
+    <div class="po-wrap">
+      <div class="po-gallery">
+        <div class="tag mono">// 3D · 360° VIEW</div>
+        <div class="big-img mono">[ PRODUCT HERO IMAGE · 3D VIEW ]</div>
+      </div>
+      <div class="po-info">
+        <div class="eyebrow mono">SAIL TC 7900 <span class="dim">WMNS · SS26</span></div>
+        <h1>TC 7900<br/>'SAIL'</h1>
+        <div class="price">$185 USD</div>
+        <p class="desc">Engineered for those who demand both performance and style. Lightweight knit upper, responsive SAIL Air cushioning, and a hex-rubber outsole tuned for multi-surface traction. A concept shoe, built for moving first.</p>
+        <div class="mono" style="font-size:10px;letter-spacing:.2em;color:var(--muted);margin-bottom:10px">SIZE (US)</div>
+        <div class="size-row" id="sizes">
+          <div class="size">6</div><div class="size">6.5</div><div class="size">7</div><div class="size sel">7.5</div><div class="size">8</div><div class="size">8.5</div><div class="size">9</div><div class="size">9.5</div><div class="size">10</div>
+        </div>
+        <div class="po-cta">
+          <button class="btn solid" style="flex:1">ADD TO BAG</button>
+          <button class="btn ghost">♡ SAVE</button>
+        </div>
+        <div class="po-meta">
+          <div class="m"><h6>WEIGHT</h6><p>248g</p></div>
+          <div class="m"><h6>DROP</h6><p>8mm</p></div>
+          <div class="m"><h6>RATING</h6><p>★★★★★ 4.9</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIBRARIES: three.js + GSAP + ScrollTrigger -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/environments/RoomEnvironment.js"></script>
+  <script src="https://unpkg.com/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script src="https://unpkg.com/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+
+  <script src="scene.js"></script>
+  <script src="interactions.js"></script>
+</body>
+</html>

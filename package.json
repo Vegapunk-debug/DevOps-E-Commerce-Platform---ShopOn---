@@ -1,0 +1,16 @@
+{
+  "name": "shopon",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"cd server && node src/index.js\" \"cd client && npm run dev\"",
+    "server": "cd server && node src/index.js",
+    "client": "cd client && npm run dev",
+    "db:seed": "cd server && node seed.js",
+    "db:push": "cd server && npx prisma db push",
+    "build": "cd client && npm run build"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

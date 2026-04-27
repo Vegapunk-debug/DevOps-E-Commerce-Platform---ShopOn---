@@ -60,8 +60,18 @@ app.delete('/api/cart/:id', async (req, res) => {
   res.json({ success: true });
 });
 
-app.get('/', (req, res) => {
-  res.send('ShopOn Backend Service');
-});
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../../client/dist')));
+  app.get('*', (req, res) => {
+    // Only handle routes that don't start with /api
+    if (!req.path.startsWith('/api')) {
+      res.sendFile(path.join(__dirname, '../../client/dist/index.html'));
+    }
+  });
+} else {
+  app.get('/', (req, res) => {
+    res.send('ShopOn Backend Service');
+  });
+}
 
 module.exports = app;

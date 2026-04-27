@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ShopOnLogo from './ShopOnLogo';
 
-const API = 'http://localhost:3001/api';
+const API = import.meta.env.PROD ? '/api' : 'http://localhost:3001/api';
 
 export default function Nav({ cartCount, onCartClick, onWishlistClick, wishlistCount = 0 }) {
   const navigate = useNavigate();

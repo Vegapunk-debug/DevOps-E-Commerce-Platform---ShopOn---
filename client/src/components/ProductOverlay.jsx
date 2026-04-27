@@ -28,8 +28,8 @@ export default function ProductOverlay({ product, open, onClose, onAddToCart, on
         <div className="po-gallery">
           <div className="tag mono">// 3D · 360° VIEW</div>
           <div className="big-img">
-            {product.image && product.image.startsWith('http') ? (
-              <img src={product.image} alt={product.name} className="po-product-img" />
+            {product.image ? (
+              <img src={import.meta.env.PROD ? product.image.replace('http://localhost:3001', '') : product.image} alt={product.name} className="po-product-img" />
             ) : (
               <span className="mono" style={{ color: 'var(--muted)', fontSize: 11 }}>PRODUCT IMAGE</span>
             )}

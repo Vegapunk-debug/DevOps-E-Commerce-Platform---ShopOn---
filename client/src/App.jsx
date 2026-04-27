@@ -22,7 +22,7 @@ import SalePage from './components/SalePage';
 import PageTransition from './components/PageTransition';
 import FlyToCartLayer, { useFlyToCart } from './components/FlyToCart';
 
-const API = 'http://localhost:3001/api';
+const API = import.meta.env.PROD ? '/api' : 'http://localhost:3001/api';
 
 function ScrollToTop() {
   return null;

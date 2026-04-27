@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Footer from './Footer';
 
-const API = 'http://localhost:3001/api';
+const API = import.meta.env.PROD ? '/api' : 'http://localhost:3001/api';
 
 const CARD_PALETTES = [
   { bg: '#e8e4dc', accent: '#0b0b0b' },
@@ -29,10 +29,10 @@ function ShoeCard({ product, index, onClick, showSale }) {
         {product.featured && !hasSale && <span className="spc-badge">FEATURED</span>}
         {hasSale && <span className="spc-badge spc-badge-sale">SALE</span>}
         {product.customizable && <span className="spc-badge spc-badge-custom">CUSTOMIZE</span>}
-        {product.image && product.image.startsWith('http') ? (
+        {product.image ? (
           <img
             className="spc-shoe-img"
-            src={product.image}
+            src={import.meta.env.PROD ? product.image.replace('http://localhost:3001', '') : product.image}
             alt={product.name}
             loading="lazy"
           />
@@ -245,8 +245,8 @@ export default function CollectionPage({
             <div className="po-gallery">
               <div className="tag mono">// {selectedProduct.style.toUpperCase()}{selectedProduct.customizable ? ' · CUSTOMIZABLE' : ''}</div>
               <div className="big-img">
-                {selectedProduct.image && selectedProduct.image.startsWith('http') ? (
-                  <img src={selectedProduct.image} alt={selectedProduct.name} className="po-product-img" />
+                {selectedProduct.image ? (
+                  <img src={import.meta.env.PROD ? selectedProduct.image.replace('http://localhost:3001', '') : selectedProduct.image} alt={selectedProduct.name} className="po-product-img" />
                 ) : (
                   <span className="mono" style={{ color: 'var(--muted)', fontSize: 11 }}>PRODUCT IMAGE</span>
                 )}

@@ -9,7 +9,7 @@
     "test": "echo \"Tests passed\""
   },
   "dependencies": {
-    "@prisma/client": "^6.6.0",
+    "@prisma/client": "^7.8.0",
     "cors": "^2.8.5",
     "express": "^4.21.0"
   },

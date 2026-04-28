@@ -51,7 +51,7 @@ export default function MusicCard() {
   return (
     <div className="music-card" aria-label="Player">
       <div className="top">
-        <ShopOnLogo width={38} height={14} />
+        <ShopOnLogo width={20} height={20} />
         <svg width="22" height="12" viewBox="0 0 22 12" fill="none" stroke="currentColor" strokeWidth="1.4">
           <rect x="0.5" y="0.5" width="18" height="11" rx="2"/>
           <rect x="2" y="2" width="14" height="8" fill="currentColor"/>

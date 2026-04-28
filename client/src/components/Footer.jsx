@@ -21,7 +21,7 @@ export default function Footer() {
     <footer>
       <div className="foot-wrap">
         <div className="foot-brand">
-          <ShopOnLogo width={80} height={30} />
+          <ShopOnLogo width={40} height={40} />
           <div style={{ fontSize: 13, opacity: 0.75, maxWidth: 300, lineHeight: 1.6 }}>
             Concept athletic footwear website. Original brand exploration — not affiliated with any real manufacturer.
           </div>

@@ -60,7 +60,7 @@ function Visual({ kind }) {
       </svg>
     );
   }
-  // tread
+
   return (
     <svg className="tile-visual" viewBox="0 0 200 240" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
       <defs>
